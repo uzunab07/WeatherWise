@@ -4,9 +4,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 
-//Khaled Mohamed Ali and Joseph Mauney
+//Khaled Mohamed Ali
 
-public class MainActivity extends AppCompatActivity implements CitiesFragment.CitiesFragmentListener, CurrentWeatherFragment.cwListener {
+public class MainActivity extends AppCompatActivity implements CitiesFragment.CitiesFragmentListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,15 +22,6 @@ public class MainActivity extends AppCompatActivity implements CitiesFragment.Ci
     public void gotoCurrentWeather(DataService.City city) {
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.rootView, CurrentWeatherFragment.newInstance(city))
-                .addToBackStack(null)
-                .commit();
-    }
-
-    @Override
-    public void goToForecast(DataService.City mCity) {
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.rootView, WeatherForecastFragment.newInstance(mCity))
                 .addToBackStack(null)
                 .commit();
     }

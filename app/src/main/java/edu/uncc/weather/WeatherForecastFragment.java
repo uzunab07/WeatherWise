@@ -5,6 +5,8 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -20,6 +22,7 @@ import com.squareup.picasso.Picasso;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import edu.uncc.weather.databinding.ForecastColItemBinding;
 import edu.uncc.weather.databinding.FragmentCurrentWeatherBinding;
 import edu.uncc.weather.databinding.FragmentWeatherForecastBinding;
 import okhttp3.Call;
@@ -45,7 +48,8 @@ public class WeatherForecastFragment extends Fragment {
 
     // TODO: Rename and change types of parameters
     private DataService.City mCity;
-    ForecastAdapter adapter;
+
+  ForeCastAdapterRecycler adapterRecycler;
     private final OkHttpClient client = new OkHttpClient();
     ArrayList<Forecast> forecasts = new ArrayList<>();
 
@@ -88,7 +92,6 @@ public class WeatherForecastFragment extends Fragment {
     }
 
     TextView cityName;
-    ListView listView;
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
@@ -96,10 +99,15 @@ public class WeatherForecastFragment extends Fragment {
 
         showForecast();
 
-        listView = view.findViewById(R.id.listView);
 
         cityName = view.findViewById(R.id.textViewCityName);
         cityName.setText(mCity.getCity()+", "+mCity.getCountry());
+
+        binding.recyclerview.setHasFixedSize(true);;
+        binding.recyclerview.setLayoutManager(new LinearLayoutManager(getContext(),LinearLayoutManager.HORIZONTAL,false));
+
+        adapterRecycler = new ForeCastAdapterRecycler();
+        binding.recyclerview.setAdapter(adapterRecycler);
 
     }
 
@@ -132,18 +140,12 @@ public class WeatherForecastFragment extends Fragment {
                     ForecastResponse list = gson.fromJson(response.body().charStream(),ForecastResponse.class);
 
                     forecasts = list.list;
-                    Log.d("demo", "onResponse: "+forecasts);
 
-                    for (int i = 0; i < forecasts.size(); i++){
-                        Forecast foretest = forecasts.get(i);
-                        Log.d("demo", "onResponse: "+foretest);
-                    }
 
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            adapter = new ForecastAdapter(getActivity(), R.layout.forecast_row_item, forecasts);
-                            listView.setAdapter(adapter);
+                           adapterRecycler.notifyDataSetChanged();
                         }
                     });
                 }else{
@@ -152,6 +154,49 @@ public class WeatherForecastFragment extends Fragment {
             }
         });
 
+    }
+
+    class ForeCastAdapterRecycler extends RecyclerView.Adapter<ForeCastAdapterRecycler.AdapterViewHolder>{
+
+
+        @NonNull
+        @Override
+        public AdapterViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            ForecastColItemBinding forecastColItemBinding = ForecastColItemBinding.inflate(getLayoutInflater(),parent,false);
+            return new AdapterViewHolder(forecastColItemBinding);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull AdapterViewHolder holder, int position) {
+                holder.setupUi(forecasts.get(position));
+        }
+
+        @Override
+        public int getItemCount() {
+            return forecasts.size();
+        }
+
+        public class AdapterViewHolder extends RecyclerView.ViewHolder{
+            ForecastColItemBinding colItemBinding;
+
+            Forecast forecast;
+
+
+
+            public void setupUi(Forecast item){
+
+                this.forecast = item;
+
+                colItemBinding.degree.setText(forecast.main.temp);
+                colItemBinding.humidity.setText(forecast.main.humidity);
+                colItemBinding.time.setText(forecast.dt_txt);
+            }
+
+            public AdapterViewHolder(@NonNull ForecastColItemBinding forecastColItemBinding) {
+                super(forecastColItemBinding.getRoot());
+                this.colItemBinding = forecastColItemBinding;
+            }
+        }
     }
 
 
