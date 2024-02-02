@@ -1,8 +1,6 @@
 package edu.uncc.weather;
 
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -21,11 +19,14 @@ import com.google.gson.Gson;
 import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import edu.uncc.weather.databinding.ForecastColItemBinding;
 import edu.uncc.weather.databinding.FragmentCurrentWeatherBinding;
-import edu.uncc.weather.databinding.FragmentWeatherForecastBinding;
+
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.HttpUrl;
@@ -39,7 +40,6 @@ public class CurrentWeatherFragment extends Fragment {
     private DataService.City mCity;
     Weather weather;
     FragmentCurrentWeatherBinding binding;
-    FragmentWeatherForecastBinding forecastBinding;
 
     ArrayList<Forecast> forecasts = new ArrayList<>();
 
@@ -98,7 +98,7 @@ public class CurrentWeatherFragment extends Fragment {
                 .addQueryParameter("lat", String.valueOf(mCity.getLat()))
                 .addQueryParameter("lon", String.valueOf(mCity.getLon()))
                 .addQueryParameter("appid", "d0f7922578a4d76d5f9737f9c9e610a1")
-                .addQueryParameter("units", "imperial")
+                .addQueryParameter("units", "metric")
                 .build();
 
         Request request = new Request.Builder()
@@ -122,10 +122,10 @@ public class CurrentWeatherFragment extends Fragment {
                         @Override
                         public void run() {
                             Toast.makeText(getContext(), "Data Recieved", Toast.LENGTH_SHORT).show();
-                            binding.currentTemp.setText(weather.main.temp_max + " F");
+                            binding.currentTemp.setText(weather.main.temp_max + "°");
                             binding.weatherDesc.setText(weather.weather.get(0).description);
-                            binding.tempH.setText("H: " + weather.main.temp_max);
-                            binding.tempL.setText(" L: " + weather.main.temp_min);
+                            binding.tempH.setText("H: " + weather.main.temp_max+"°");
+                            binding.tempL.setText(" L: " + weather.main.temp_min+"°");
                             HttpUrl urlPicIcon = HttpUrl.parse("https://openweathermap.org/img/wn/")
                                     .newBuilder().addPathSegment(weather.weather.get(0).icon + "@2x.png")
                                     .build();
@@ -152,7 +152,7 @@ public class CurrentWeatherFragment extends Fragment {
                 .addQueryParameter("lat", String.valueOf(mCity.getLat()))
                 .addQueryParameter("lon", String.valueOf(mCity.getLon()))
                 .addQueryParameter("appid", "d0f7922578a4d76d5f9737f9c9e610a1")
-                .addQueryParameter("units", "imperial")
+                .addQueryParameter("units", "metric")
                 .build();
 
         Request request = new Request.Builder()
@@ -203,7 +203,11 @@ public class CurrentWeatherFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull AdapterViewHolder holder, int position) {
-            holder.setupUi(forecasts.get(position));
+            try {
+                holder.setupUi(forecasts.get(position));
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         @Override
@@ -217,13 +221,29 @@ public class CurrentWeatherFragment extends Fragment {
             Forecast forecast;
 
 
-            public void setupUi(Forecast item) {
+            public void setupUi(Forecast item) throws ParseException {
 
                 this.forecast = item;
 
-                colItemBinding.degree.setText(forecast.main.temp);
-                colItemBinding.humidity.setText(forecast.main.humidity);
-                colItemBinding.time.setText(forecast.dt_txt);
+                colItemBinding.degree.setText(forecast.main.temp+"°");
+                colItemBinding.humidity.setText(forecast.main.humidity+"%");
+                colItemBinding.forecastL.setText(forecast.main.temp_min+"°");
+                colItemBinding.forecastH.setText(forecast.main.temp_max+"°");
+                SimpleDateFormat dt = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm a");
+                Date date = dt.parse(forecast.dt_txt);
+                String time = timeFormat.format(date);
+                colItemBinding.time.setText(time);
+
+                HttpUrl urlPicIcon = HttpUrl.parse("https://openweathermap.org/img/wn/")
+                        .newBuilder().addPathSegment(forecast.weather.get(0).icon + "@2x.png")
+                        .build();
+                String forecastUrl = urlPicIcon.toString();
+
+                Log.d("TAGp", "setupUi: "+forecast.weather.get(0).icon);
+
+                Picasso.get().load(forecastUrl).into(colItemBinding.forecastIcon);
+
             }
 
             public AdapterViewHolder(@NonNull ForecastColItemBinding forecastColItemBinding) {

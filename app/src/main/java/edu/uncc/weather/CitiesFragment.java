@@ -41,8 +41,8 @@ public class CitiesFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         getActivity().setTitle("Cities");
-        adapter = new ArrayAdapter<DataService.City>(getActivity(), android.R.layout.simple_list_item_1, android.R.id.text1, DataService.cities);
-        binding.listView.setAdapter(adapter);
+        adapter = new ArrayAdapter<DataService.City>(getActivity(),R.layout.city_row_item,android.R.id.text1,DataService.cities);
+binding.listView.setAdapter(adapter);
 
         binding.listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
